@@ -4,8 +4,6 @@
 // JAVA REFERENCE: https://github.com/dtfiedler/java-binary-tree/blob/master/src/BinaryTree.java
 
 /*
-    [Lucas]:
-
     TODO: DOUBLE CHECK LUCAS' IMPLEMENTATIONS FOR INSERT AND FIND, ENSURE VALIDITY HOLDS
     TODO: IMPLEMENT & VERIFY DELETE FUNCTION
     TODO: IMPLEMENT & VERIFY TREE TRAVERSALS
@@ -16,10 +14,14 @@ datatype Tree = Null | Node(left: Tree, value: int, right: Tree)
 class BST{
     var root: Tree
 
-    constructor(r: Tree) 
-        ensures isBST(r) ==> isBST(root)
+    constructor(r: Tree)
+        ensures isBST(root)
     {
-        root := r;
+       root := r;
+       new; 
+       if (!isBST(r)) {
+        root := Null; // Constructs valid tree, on the condition that paramter r is also valid
+       }
     }
 
     // Used as helper in isBST
@@ -63,7 +65,7 @@ class BST{
                     in_BST(r, search_val)
     }
 
-    // [Lucas]: Fixed to verify fully. Strengthened ensures to iff, removed unreachable Null case, removed assumes, renamed for clarity.
+    // Returns true iff 't' contains search_val
     method value_in_tree(t: Tree, search_val: int) returns (ret: bool)
         requires t != Null
         ensures ret ==> in_BST(t, search_val) // ENSURE THAT THE VALUE IS IN THE TREE IFF THE PREDICATE HOLDS
@@ -88,41 +90,46 @@ class BST{
                 }
     }
 
+    // TODO: DISALLOW DUPLICATES HERE BY ADDING ANOTHER CONDITION
     function isBST(t: Tree): bool
     {
         match t
             case Null => true
-            case Node(l_child,_,r_child) => 
-               isBST(l_child) && isBST(r_child) && (l_child != Null ==> max_value_in_tree(l_child) < t.value) && (r_child != Null ==> min_value_in_tree(r_child) > t.value)
+            case Node(l_child,v,r_child) => 
+               isBST(l_child) && isBST(r_child) 
+               && forall x: int :: 0 <= x < v && in_BST(l_child, x) ==> (x < v) // Valid tree structure & ordering property holds
+               && forall x: int :: v < x && in_BST(r_child, x) ==> (x > v)
     }
 
-    // [Lucas]:
     // Appends a new value, v, as a descendent of current_node
     // TODO : ENSURE PROPER ORDERING AS POST CONDITION
     // TODO : ADD ANY OTHER APPROPRIATE VERIFICATION CONDITIONS 
     method add_recursive(current_node: Tree, v: int) returns (ret: Tree)
         requires isBST(current_node)
         ensures isBST(ret)
+        ensures in_BST(ret, v)
     {
-        if (current_node == Null) {
-            ret := Node(Null, v, Null);
-        } else {
+        match current_node
+        case Node(curr_l, curr_v, curr_r) =>
             if (v < current_node.value) { // Insert as left child
-                ret := add_recursive(current_node.left, v);
+                var tmp := add_recursive(current_node.left, v);
+                ret := Node(tmp, curr_v, curr_r);
             }
             else { // Insert as right child
-                ret := add_recursive(current_node.right, v);
+                var tmp := add_recursive(current_node.right, v);
+                ret := Node(curr_l, curr_v, tmp);
             }
-        }
+        case Null =>
+            ret := Node(Null, v, Null);
     }
 
-    // [Lucas]:
     // So far, we just assume that we have a valid structure, and then that insertion doesn't break our structure
     // TODO: FIND A WAY TO VERIFY THAT, FROM THE VERY BEGINNING, THE BST PROPERTIES HOLD
     method insert(v: int)
+        modifies this
         requires isBST(this.root)
         ensures isBST(this.root)
-        modifies this
+
     {
         this.root := add_recursive(this.root, v);
     }
