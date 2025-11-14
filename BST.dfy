@@ -160,4 +160,77 @@ class BST{
     {
         this.root := add_recursive(this.root, v);
     }
+
+   /* DELETE */
+   // helper to find inorder successor
+    method find_min(t: Tree) returns (min_val: int)
+        requires t != Null
+        ensures min_val == min_value_in_tree(t)
+        decreases t
+    {
+        match t
+            case Node(l_child, v, _, _) =>
+                if l_child == Null {
+                    min_val := v;
+                } else {
+                    min_val := find_min(l_child);
+                }
+    }
+
+    // helper to return tree without value v
+    method delete_recursive(current_node: Tree, v: int) returns (ret: Tree)
+        requires isBST(current_node)
+        decreases current_node
+    {
+        match current_node
+            case Null =>
+                ret := Null;
+            case Node(curr_l, curr_v, curr_r, curr_parent) =>
+                // Node traversal to v; will extract this into a its own function and use it later
+                if v < curr_v {
+                    if curr_l != Null {
+                        var new_left := delete_recursive(curr_l, v);
+                        ret := Node(new_left, curr_v, curr_r, curr_parent);
+                    } else {
+                        ret := current_node;
+                    }
+                }
+                else if v > curr_v {
+                    if curr_r != Null {
+                        var new_right := delete_recursive(curr_r, v);
+                        ret := Node(curr_l, curr_v, new_right, curr_parent);
+                    } else {
+                        ret := current_node;
+                    }
+                }
+                else {
+                    // Case 1: Node is a leaf
+                    if curr_l == Null && curr_r == Null {
+                        ret := Null;
+                    }
+                    // Case 2: Node has only right child
+                    else if curr_l == Null {
+                        ret := curr_r;
+                    }
+                    // Case 2': Node has only left child
+                    else if curr_r == Null {
+                        ret := curr_l;
+                    }
+                    else {
+                        // Case 3: Node has two children; delete inorder successor and replace current node with successor
+                        var successor_val := find_min(curr_r);
+                        var new_right := delete_recursive(curr_r, successor_val);
+                        ret := Node(curr_l, successor_val, new_right, curr_parent);
+                    }
+                }
+    }
+
+    method delete(v: int)
+        modifies this
+        requires isBST(this.root)
+    {
+        if this.root != Null {
+            this.root := delete_recursive(this.root, v);
+        }
+    }
 }
