@@ -160,4 +160,72 @@ class BST{
     {
         this.root := add_recursive(this.root, v);
     }
+
+    /* DELETE */
+    function SetParent(t: Tree, p: Tree): Tree
+    {
+        match t
+        case Null => Null
+        case Node(l, v, r, _) => Node(SetParent(l, t), v, SetParent(r, t), p)
+    }
+
+    // Helper to find inorder successor
+    method find_min(t: Tree) returns (min_val: int)
+        requires t != Null
+        ensures min_val == min_value_in_tree(t)
+        decreases t
+    {
+        match t
+        case Node(l, v, r, _) =>
+            if l == Null {
+                min_val := v;
+            } else {
+                min_val := find_min(l);
+            }
+    }
+
+    // Verified delete_recursive; returns copy of tree without v
+    method delete_recursive(current_node: Tree, v: int) returns (ret: Tree)
+        requires isBST(current_node)
+        ensures ret !=Null || isBST(ret)
+        decreases current_node
+    {
+        if current_node == Null {
+            ret := Null;
+            return;
+        }
+
+        match current_node
+        case Node(curr_l, curr_v, curr_r, curr_parent) =>
+            if v < curr_v {
+                var new_left := delete_recursive(curr_l, v);
+                ret := Node(new_left, curr_v, curr_r, curr_parent);
+            } else if v > curr_v {
+                var new_right := delete_recursive(curr_r, v);
+                ret := Node(curr_l, curr_v, new_right, curr_parent);
+            } else {
+                // Node to delete
+                if curr_l == Null {
+                    ret := SetParent(curr_r, curr_parent);
+                } else if curr_r == Null {
+                    ret := SetParent(curr_l, curr_parent);
+                } else {
+                    // Node with two children: find successor
+                    var successor_val := find_min(curr_r);
+                    var new_right := delete_recursive(curr_r, successor_val);
+                    ret := Node(curr_l, successor_val, SetParent(new_right, current_node), curr_parent);
+                }
+            }
+    }
+
+    // Delete method modifying the BST
+    method delete(v: int)
+        modifies this
+        requires isBST(this.root)
+        ensures this.root != Null || isBST(this.root)
+    {
+        if this.root != Null {
+            this.root := delete_recursive(this.root, v);
+        }
+    }
 }
