@@ -55,6 +55,16 @@ class BST{
                 
     }
 
+    //Helper that gets all values in a tree as a set
+    function tree_values(t: Tree): set<int>
+    {
+        match t
+        case Null => {}
+        case Node(l, v, r, _) =>
+            {v} + tree_values(l) + tree_values(r)
+    }
+
+
     predicate in_BST(t: Tree, search_val: int)
     {
         match t
@@ -125,6 +135,7 @@ class BST{
                 && (l_child != Null ==> all_less_than(l_child, v))
                 && (r_child != Null ==> all_greater_than(r_child, v))
     }
+
 
     // Appends a new value, v, as a descendent of current_node
     // TODO : ENSURE PROPER ORDERING AS POST CONDITION
@@ -228,4 +239,54 @@ class BST{
             this.root := delete_recursive(this.root, v);
         }
     }
+
+    // ROTATIONS
+    // Right rotate y around its left child x
+    //          y                         x
+    //        /   \                     /   \
+    //       x     C       ->           A     y
+    //     /   \                           /   \
+    //    A     B                         B     C
+    
+    method right_rotate(y: Tree) returns (ret: Tree)
+        requires y != Null && y.left != Null
+        requires isBST(y)             
+        ensures ret != Null
+        ensures tree_values(ret) == tree_values(y)  
+    {
+        match y
+        case Node(x, y_val, C, y_parent) =>
+            match x
+            case Node(A, x_val, B, x_parent) =>
+                //build new y node with B and C as its children
+                var new_y := Node(B, y_val, C, Null);
+                //build new root node with A and new_y as its children
+                ret := Node(A, x_val, new_y, y_parent);
+    }
+
+    // Left rotate x around its right child y
+    //         x                           y
+    //       /   \                       /   \
+    //      A     y        ->           x     C
+    //          /   \                 /   \
+    //         B     C               A     B
+
+    method left_rotate(x: Tree) returns (ret: Tree)
+        requires x != Null && x.right != Null
+        requires isBST(x)                
+        ensures ret != Null
+        ensures tree_values(ret) == tree_values(x) 
+    {
+        match x
+        case Node(A, x_val, y, x_parent) =>
+            match y
+            case Node(B, y_val, C, y_parent) =>
+                //build new x node with A and B as its children
+                var new_x := Node(A, x_val, B, Null);
+                //build new root node with new_x and C as its children
+                ret := Node(new_x, y_val, C, x_parent);
+    }
+
+
+
 }
