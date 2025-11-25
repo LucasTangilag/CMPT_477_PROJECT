@@ -287,6 +287,93 @@ class BST{
                 ret := Node(new_x, y_val, C, x_parent);
     }
 
+    // Returns the height of the tree (Null has height 0)
+    function height(t: Tree): int
+        ensures t == Null ==> height(t) == 0
+        ensures t != Null ==> height(t) > 0
+        decreases t
+    {
+        match t
+        case Null => 0
+        case Node(l, _, r, _) => 1 + if height(l) > height(r) then height(l) else height(r)
+    }
 
+    method successor(t: Tree) returns (s: int, hasSucc: bool)
+        requires t != Null
+        requires in_BST(this.root, t.value)
+        requires isBST(this.root)
+        ensures isBST(old(this.root))
+        ensures in_BST(this.root, t.value)
+        ensures hasSucc ==> (t.right != Null ==> s == min_value_in_tree(t.right))
+    {
+        match t
+        case Node(_, v, r, p) =>
 
+            if r != Null {
+                s := min_value_in_tree(r);
+                hasSucc := true;
+                return;
+            }
+
+            var curr := t;
+            var par := p;
+
+            while par != Null && curr == match par case Node(_,_,r2,_) => r2
+                decreases par
+            {
+                curr := par;
+                match par
+                case Node(_,_,_,pp) => par := pp;
+            }
+
+            if par == Null {
+                hasSucc := false;
+                s := v; 
+            } else {
+                match par
+                case Node(_, pv, _, _) =>
+                    s := pv;
+                    hasSucc := true;
+            }
+    }
+
+    method predecessor(t: Tree) returns (pval: int, hasPred: bool)
+        requires t != Null
+        requires in_BST(this.root, t.value)
+        requires isBST(this.root)
+        ensures hasPred ==> (t.left != Null ==> pval == max_value_in_tree(t.left))
+    {
+        match t
+        case Node(l, v, r, parent) =>
+
+            // CASE 1: predecessor is in left subtree
+            if l != Null {
+                pval := max_value_in_tree(l);
+                hasPred := true;
+                return;
+            }
+
+            // CASE 2: walk up until we find a parent where we came from the right
+            var curr := t;
+            var par := parent;
+
+            while par != Null && curr == match par case Node(l2, _, _, _) => l2
+                decreases par
+            {
+                curr := par;
+                match par
+                case Node(_, _, _, pp) => par := pp;
+            }
+
+            if par == Null {
+                // no predecessor exists
+                hasPred := false;
+                pval := v;  
+            } else {
+                match par
+                case Node(_, pv, _, _) =>
+                    pval := pv;
+                    hasPred := true;
+            }
+    }
 }
