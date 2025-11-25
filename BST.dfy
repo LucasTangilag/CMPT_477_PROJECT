@@ -56,12 +56,12 @@ class BST{
     }
 
     //Helper that gets all values in a tree as a set
-    function tree_values(t: Tree): set<int>
+    function tree_values(t: Tree): multiset<int>
     {
         match t
-        case Null => {}
+        case Null => multiset{}
         case Node(l, v, r, _) =>
-            {v} + tree_values(l) + tree_values(r)
+            multiset{v} + tree_values(l) + tree_values(r)
     }
 
 
@@ -375,5 +375,164 @@ class BST{
                     pval := pv;
                     hasPred := true;
             }
+    }
+
+    /* Traversal */
+
+    // Check the validity of BST
+    predicate isBST_for_traversal(t: Tree)
+    {
+        match t
+            case Null => true
+            case Node(l_child, v, r_child, _) =>
+                isBST_for_traversal(l_child)
+                && isBST_for_traversal(r_child)
+                && all_less_than(l_child, v)
+                && all_greater_than(r_child, v)
+    }
+
+    // Check if input sequence is sorted in ascending order
+    predicate is_sorted(s: seq<int>)
+    {
+        forall i, j :: 0 <= i < j < |s| ==> s[i] < s[j]
+    }
+
+    // Check if all elements in input sequence are less than bound
+    predicate seq_all_less_than(s: seq<int>, bound: int)
+    {
+        forall i :: 0 <= i < |s| ==> s[i] < bound
+    }
+
+    // Check if all elements in input sequence are greater than bound
+    predicate seq_all_greater_than(s: seq<int>, bound: int)
+    {
+        forall i :: 0 <= i < |s| ==> s[i] > bound
+    }
+
+    // Mathematical definition of inorder traversal (for reasoning)
+    // : produce a sequence in inorder traversal order
+    function inorder_traversal_seq(t: Tree): seq<int>
+        requires isBST_for_traversal(t)
+        decreases t
+    {
+        match t
+        case Null => []
+        case Node(l, v, r, _) =>
+            inorder_traversal_seq(l) + [v] + inorder_traversal_seq(r)
+    }
+
+    // Helps Dafny verify inorder_is_sorted
+    // : prove that if all tree values are less than bound, then so is the inorder sequence (connect tree properties to sequence properties)
+    lemma all_less_than_to_seq(t: Tree, bound: int)
+        requires isBST_for_traversal(t)
+        requires all_less_than(t, bound)
+        ensures seq_all_less_than(inorder_traversal_seq(t), bound)
+        decreases t
+    {
+        match t
+        case Null => {}
+        case Node(l, v, r, _) =>
+            all_less_than_to_seq(l, bound);
+            all_less_than_to_seq(r, bound);
+    }
+
+    // Helps Dafny verify inorder_is_sorted
+    // : prove that if all tree values are greater than bound, then so is the inorder sequence (connect tree properties to sequence properties)
+    lemma all_greater_than_to_seq(t: Tree, bound: int)
+        requires isBST_for_traversal(t)
+        requires all_greater_than(t, bound)
+        ensures seq_all_greater_than(inorder_traversal_seq(t), bound)
+        decreases t
+    {
+        match t
+        case Null => {}
+        case Node(l, v, r, _) =>
+            all_greater_than_to_seq(l, bound);
+            all_greater_than_to_seq(r, bound);
+
+    }
+
+    // Helps Dafny verify inorder_traversal
+    // : prove that inorder traversal gives sorted output for valid BST
+    lemma inorder_is_sorted(t: Tree)
+        requires isBST_for_traversal(t)
+        ensures is_sorted(inorder_traversal_seq(t))
+        decreases t
+    {
+        match t
+        case Null => {}
+        case Node(l, v, r, _) =>
+            inorder_is_sorted(l);
+            inorder_is_sorted(r);
+
+            assert all_less_than(l, v);
+            assert all_greater_than(r, v);
+
+            all_less_than_to_seq(l, v);
+            all_greater_than_to_seq(r, v);
+    }
+
+    // Implementation of inorder traversal
+    // : left subtree -> current node -> right subtree
+    method inorder_traversal(t: Tree) returns (result: seq<int>)
+        requires isBST_for_traversal(t) // valid BST
+        // 1. all values in result exist in tree
+        ensures forall i :: 0 <= i < |result| ==> result[i] in tree_values(t)
+        // 2. result size equals tree size (no missing or extra tree values)
+        ensures |result| == |tree_values(t)|
+        // 3. inorder traversal's result is sorted
+        ensures is_sorted(result)
+        // 4. inorder traversal's result matches the mathematical function
+        ensures result == inorder_traversal_seq(t)
+        decreases t
+    {
+        match t
+        case Null =>
+            result := [];
+        case Node(l, v, r, _) => 
+            var left_result := inorder_traversal(l);
+            var right_result := inorder_traversal(r);
+            result := left_result + [v] + right_result;
+
+            inorder_is_sorted(t);
+            assert result == inorder_traversal_seq(t);
+    }
+
+    // Implementation of preorder traversal
+    // : root node -> left subtree -> right subtree
+    method preorder_traversal(t: Tree) returns (result: seq<int>)
+        requires isBST_for_traversal(t)
+        // 1. all values in result exists in tree
+        ensures forall i :: 0 <= i < |result| ==> result[i] in tree_values(t)
+        // 2. result size equals tree size (no missing or extra tree values)
+        ensures |result| == |tree_values(t)|
+        decreases t
+    {
+        match t
+        case Null =>
+            result := [];
+        case Node(l, v, r, _) =>
+            var left_result := preorder_traversal(l);
+            var right_result := preorder_traversal(r);
+            result := [v] + left_result + right_result;
+    }
+
+    // Implementation of postorder traversal
+    // : left subtree -> right subtree -> root node
+    method postorder_traversal(t: Tree) returns (result: seq<int>)
+        requires isBST_for_traversal(t)
+        // 1. all values in result exist in tree
+        ensures forall i :: 0 <= i < |result| ==> result[i] in tree_values(t)
+        // 2. result size equals tree size (no missing or extra tree values)
+        ensures |result| == |tree_values(t)|
+        decreases t
+    {
+        match t
+        case Null =>
+            result := [];
+        case Node(l, v, r, _) =>
+            var left_result := postorder_traversal(l);
+            var right_result := postorder_traversal(r);
+            result := left_result + right_result + [v];
     }
 }
