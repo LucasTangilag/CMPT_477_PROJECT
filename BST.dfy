@@ -298,23 +298,6 @@ class BST{
         case Node(l, _, r, _) => 1 + if height(l) > height(r) then height(l) else height(r)
     }
 
-    // helper function for successor and predecessor
-    function leftmost_value(t: Tree): int
-        requires t != Null
-    {
-        match t
-        case Node(l, v, _, _) =>
-            if l == Null then v else leftmost_value(l)
-    }
-    // helper function for successor and predecessor
-    function rightmost_value(t: Tree): int
-        requires t != Null
-    {
-        match t
-        case Node(_, v, r, _) =>
-            if r == Null then v else rightmost_value(r)
-    }
-
     method successor(t: Tree) returns (s: int, hasSucc: bool)
         requires t != Null
         requires in_BST(this.root, t.value)
@@ -327,7 +310,7 @@ class BST{
         case Node(_, v, r, p) =>
 
             if r != Null {
-                s := leftmost_value(r);
+                s := min_value_in_tree(r);
                 hasSucc := true;
                 return;
             }
@@ -358,15 +341,14 @@ class BST{
         requires t != Null
         requires in_BST(this.root, t.value)
         requires isBST(this.root)
-        ensures hasPred ==> pval < t.value
-        ensures hasPred ==> forall x :: x < t.value && in_BST(this.root, x) ==> x <= pval
+        ensures hasPred ==> (t.left != Null ==> pval == max_value_in_tree(t.left))
     {
         match t
         case Node(l, v, r, parent) =>
 
             // CASE 1: predecessor is in left subtree
             if l != Null {
-                pval := rightmost_value(l);
+                pval := max_value_in_tree(l);
                 hasPred := true;
                 return;
             }
@@ -394,5 +376,4 @@ class BST{
                     hasPred := true;
             }
     }
-
 }
