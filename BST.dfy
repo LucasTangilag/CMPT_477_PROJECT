@@ -3,16 +3,6 @@
 
 // JAVA REFERENCE: https://github.com/dtfiedler/java-binary-tree/blob/master/src/BinaryTree.java
 
-/*
-    TODO: DOUBLE CHECK IMPLEMENTATION & VERIFICATION FOR INSERT 
-    TODO: IMPLEMENT & VERIFY FIND FUNCTIONS
-    TODO: IMPLEMENT & VERIFY DELETE FUNCTION
-    TODO: IMPLEMENT & VERIFY TREE TRAVERSALS
-
-    Something that could maybe help with the above tasks is to also create a function that traverses the tree and outputs the values, in sorted order, in an array.
-    This could make it easier to verify
-*/
-
 datatype Tree = Null | Node(left: Tree, value: int, right: Tree, parent: Tree)
 
 class BST{
@@ -28,7 +18,7 @@ class BST{
        }
     }
 
-    // Used as helper in isBST
+    // Helper: find maximum element of t
     function max_value_in_tree(t: Tree): int
         requires t != Null
         
@@ -42,7 +32,7 @@ class BST{
     }
 
 
-    // Used as helper in isBST
+    // Helper find minimum element of t
     function min_value_in_tree(t: Tree): int
         requires t != Null
     {
@@ -81,20 +71,20 @@ class BST{
     // Returns true iff 't' contains search_val
     method value_in_tree(t: Tree, search_val: int) returns (ret: bool)
         requires t != Null
-        ensures ret ==> in_BST(t, search_val) // ENSURE THAT THE VALUE IS IN THE TREE IFF THE PREDICATE HOLDS
+        ensures ret ==> in_BST(t, search_val)
         decreases t
     {
         match t
             case Node(l_child, node_val, r_child, _) => 
                 if (node_val == search_val) {
                     ret := true;
-                } else if (search_val < node_val) { // LESS THAN CASE
+                } else if (search_val < node_val) { // less-than case
                     if (l_child == Null) {
                         ret := false;
                     } else {
                         ret := value_in_tree(l_child, search_val);
                     }
-                } else { // GREATER THAN CASE
+                } else { // greater-than case
                     if (r_child == Null) {
                         ret := false;
                     } else {
@@ -121,7 +111,6 @@ class BST{
         v > bound && all_greater_than(l, bound) && all_greater_than(r, bound)
     }
 
-    // TODO: ENSURE THAT THESE CONDITIONS ACTUALLY DO ENFORCE THE ORDERING PROPERTY (because I'm actually not even sure if it does)
     predicate isBST(t: Tree)
     {
         match t
@@ -129,8 +118,6 @@ class BST{
             case Node(l_child,v,r_child, _) => 
                 isBST(l_child) 
                 && isBST(r_child) 
-                // && (l_child != Null ==> max_value_in_tree(l_child) <= t.value) 
-                // && (r_child != Null ==> min_value_in_tree(r_child) >= t.value)
                 && if (t.parent != Null) then (t == t.parent.left ==> t.value < t.parent.value) && (t == t.parent.right ==> t.value > t.parent.value) else true
                 && (l_child != Null ==> all_less_than(l_child, v))
                 && (r_child != Null ==> all_greater_than(r_child, v))
@@ -138,8 +125,6 @@ class BST{
 
 
     // Appends a new value, v, as a descendent of current_node
-    // TODO : ENSURE PROPER ORDERING AS POST CONDITION
-    // TODO : ADD ANY OTHER APPROPRIATE VERIFICATION CONDITIONS 
     method add_recursive(current_node: Tree, v: int) returns (ret: Tree)
         requires isBST(current_node)
         ensures isBST(ret)
@@ -162,7 +147,6 @@ class BST{
     }
 
     // So far, we just assume that we have a valid structure, and then that insertion doesn't break our structure
-    // TODO: FIND A WAY TO VERIFY THAT, FROM THE VERY BEGINNING, THE BST PROPERTIES HOLD
     method insert(v: int)
         modifies this
         requires isBST(this.root)
