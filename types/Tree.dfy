@@ -34,4 +34,18 @@ module TreeModule {
                     min_value_in_tree(l_child)
                 
     }
+
+
+    // Helper: find maximum element of t
+    function max_value_in_tree(t: Tree): int
+        requires t != Null
+        
+    {
+        match t
+            case Node(_, v, r_child, _) => 
+                if r_child == Null then
+                    v
+                else 
+                    max_value_in_tree(r_child)
+    }
 }
