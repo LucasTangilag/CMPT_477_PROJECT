@@ -21,4 +21,17 @@ module TreeModule {
         case Node(l, v, r, _) =>
             multiset{v} + tree_values(l) + tree_values(r)
     }
+
+    // Helper find minimum element of t
+    function min_value_in_tree(t: Tree): int
+        requires t != Null
+    {
+        match t
+            case Node(l_child, v, _, _) => 
+                if l_child == Null then
+                    v
+                else 
+                    min_value_in_tree(l_child)
+                
+    }
 }
