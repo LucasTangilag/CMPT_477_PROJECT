@@ -1,4 +1,4 @@
-include "Tree.dfy"
+include "../types/Tree.dfy"
 module BSTPredicates {
     import TreeModule
     // True iff all values in t are < bound
