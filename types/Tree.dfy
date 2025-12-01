@@ -12,4 +12,13 @@ module TreeModule {
         case Null => 0
         case Node(l, _, r, _) => 1 + if height(l) > height(r) then height(l) else height(r)
     }
+
+    //Helper that gets all values in a tree as a set
+    function tree_values(t: Tree): multiset<int>
+    {
+        match t
+        case Null => multiset{}
+        case Node(l, v, r, _) =>
+            multiset{v} + tree_values(l) + tree_values(r)
+    }
 }
