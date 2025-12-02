@@ -10,7 +10,7 @@ include "utils/Utils.dfy"
 include "operations/BSTInsertDelete.dfy"
 include "operations/BSTRotate.dfy"
 include "operations/BSTSuccessorPredecessor.dfy"
-
+include "operations/BSTTraversal.dfy"
 module BST {
     import T = TreeModule
     import U = Utils
@@ -19,6 +19,7 @@ module BST {
     import AddDelete = BSTInsertDelete
     import Rotate = BSTRotate
     import SuccessorPredecessor = BSTSuccessorPredecessor
+    import Traversal = BSTTraversal
 
   class BST {
     var root: T.Tree
@@ -88,5 +89,35 @@ module BST {
     {
         pval, hasPred := SuccessorPredecessor.predecessor(t, this.root);
     }
+
+    method InorderTraversal(t: T.Tree) returns (result: seq<int>)
+        requires Pred.isBST_for_traversal(t) // valid BST
+        ensures forall i :: 0 <= i < |result| ==> result[i] in T.tree_values(t)
+        ensures |result| == |T.tree_values(t)|
+        ensures Pred.is_sorted(result)
+        ensures result == U.inorder_traversal_seq(t)
+        decreases t
+    {
+        result := Traversal.inorder_traversal(t);
+    }
+
+    method PreorderTraversal(t: T.Tree) returns (result: seq<int>)
+        requires Pred.isBST_for_traversal(t)
+        ensures forall i :: 0 <= i < |result| ==> result[i] in T.tree_values(t)
+        ensures |result| == |T.tree_values(t)|
+        decreases t
+    {
+        result := Traversal.preorder_traversal(t);
+    }
+
+    method PostorderTraversal(t: T.Tree) returns (result: seq<int>)
+        requires Pred.isBST_for_traversal(t)
+        ensures forall i :: 0 <= i < |result| ==> result[i] in T.tree_values(t)
+        ensures |result| == |T.tree_values(t)|
+        decreases t
+    {
+        result := Traversal.postorder_traversal(t);
+    }
+
   }
 }
